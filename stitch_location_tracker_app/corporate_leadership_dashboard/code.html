@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .kpi-card-shadow {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#2f1500",
+                        "secondary-fixed": "#b1f0ce",
+                        "surface-tint": "#545e76",
+                        "on-tertiary-container": "#d57401",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#3e1e00",
+                        "on-secondary-container": "#316e52",
+                        "primary-container": "#1b263b",
+                        "surface-dim": "#d8dadc",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#ffdcc3",
+                        "background": "#f7f9fb",
+                        "on-secondary-fixed": "#002114",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#45474d",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "on-primary-fixed-variant": "#3c475d",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "secondary": "#2c694e",
+                        "surface-container-low": "#f2f4f6",
+                        "outline": "#75777d",
+                        "outline-variant": "#c5c6cd",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary-fixed-dim": "#95d4b3",
+                        "surface-container": "#eceef0",
+                        "surface-container-high": "#e6e8ea",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#0e5138",
+                        "secondary-container": "#aeeecb",
+                        "surface": "#f7f9fb",
+                        "tertiary-fixed-dim": "#ffb77d",
+                        "on-background": "#191c1e",
+                        "primary-fixed": "#d7e2ff",
+                        "on-surface": "#191c1e",
+                        "primary-fixed-dim": "#bbc6e2",
+                        "on-primary-container": "#828da7",
+                        "tertiary": "#200c00",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary-fixed": "#101b30",
+                        "inverse-primary": "#bbc6e2",
+                        "primary": "#051125"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap": "16px",
+                        "base": "8px",
+                        "section-padding": "24px",
+                        "inline-gap": "12px",
+                        "container-margin": "20px"
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "data-display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-24">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-50 bg-surface border-b border-outline-variant flex items-center justify-between px-container-margin py-base max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional portrait of a senior corporate executive with a friendly and authoritative expression. The person is dressed in high-quality business attire, standing against a blurred, modern office background with soft cinematic lighting. The image maintains a clean, high-contrast aesthetic consistent with a premium corporate dashboard interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjPYthawamKptO2svXYC5fv264uFWWqQl9In0-GIhvdJMYbhV91YV9oAn2yg7r43B96sIFx5ecN_i4KNfN2pysyEnFB3xtlQ8-fQLACG6d-HN-MC_1CZkmrqyplTuoFpHs2qIu4ZyYphrM8yyKitoUygP9PlXww_CrNTgeIqyjop4D1BP74xVjeeWioLaIC1vtzYb7yHgXD5LuDqTH00v1sHmVKNKIYYwjyZtXmz-3munyX0ZhkPP5KF1IoscqtqdI7EGTUN1IlIyy"/>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-primary">Selamat Pagi, Kepala</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Division Lead</p>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</header>
+<main class="px-container-margin pt-stack-gap space-y-8">
+<!-- KPI Section -->
+<section class="grid grid-cols-1 gap-4">
+<div class="flex flex-row overflow-x-auto gap-4 pb-2 custom-scrollbar -mx-5 px-5">
+<!-- KPI 1: Total Tasks -->
+<div class="min-w-[160px] flex-1 bg-surface-container-lowest p-4 rounded-xl border border-outline-variant kpi-card-shadow">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Total Tasks</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-data-display text-data-display text-primary">124</span>
+<span class="text-secondary font-label-caps text-[10px]">+12%</span>
+</div>
+<div class="mt-3 w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[70%]"></div>
+</div>
+</div>
+<!-- KPI 2: Delayed Projects -->
+<div class="min-w-[160px] flex-1 bg-surface-container-lowest p-4 rounded-xl border border-outline-variant kpi-card-shadow">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Delayed</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-data-display text-data-display text-error">08</span>
+<span class="text-error font-label-caps text-[10px]">-2</span>
+</div>
+<div class="mt-3 w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-error h-full w-[25%]"></div>
+</div>
+</div>
+<!-- KPI 3: Active Staff -->
+<div class="min-w-[160px] flex-1 bg-surface-container-lowest p-4 rounded-xl border border-outline-variant kpi-card-shadow">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Active Staff</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-data-display text-data-display text-secondary">42</span>
+<span class="text-secondary-container font-label-caps text-[10px] bg-secondary p-1 rounded">LIVE</span>
+</div>
+<div class="mt-3 w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[90%]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Team Productivity Chart -->
+<section class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant kpi-card-shadow">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Weekly Productivity</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Efficiency per department</p>
+</div>
+<button class="material-symbols-outlined text-outline">more_vert</button>
+</div>
+<div class="flex items-end justify-between h-40 gap-3 px-2">
+<!-- Bar 1 -->
+<div class="flex flex-col items-center flex-1 gap-2">
+<div class="w-full bg-primary-container/10 rounded-t-lg relative group h-full flex items-end">
+<div class="bg-primary w-full rounded-t-lg transition-all duration-700 h-[65%] group-hover:bg-secondary"></div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">MON</span>
+</div>
+<!-- Bar 2 -->
+<div class="flex flex-col items-center flex-1 gap-2">
+<div class="w-full bg-primary-container/10 rounded-t-lg relative group h-full flex items-end">
+<div class="bg-primary w-full rounded-t-lg transition-all duration-700 h-[85%] group-hover:bg-secondary"></div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">TUE</span>
+</div>
+<!-- Bar 3 -->
+<div class="flex flex-col items-center flex-1 gap-2">
+<div class="w-full bg-primary-container/10 rounded-t-lg relative group h-full flex items-end">
+<div class="bg-secondary w-full rounded-t-lg transition-all duration-700 h-[95%]"></div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">WED</span>
+</div>
+<!-- Bar 4 -->
+<div class="flex flex-col items-center flex-1 gap-2">
+<div class="w-full bg-primary-container/10 rounded-t-lg relative group h-full flex items-end">
+<div class="bg-primary w-full rounded-t-lg transition-all duration-700 h-[45%] group-hover:bg-secondary"></div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">THU</span>
+</div>
+<!-- Bar 5 -->
+<div class="flex flex-col items-center flex-1 gap-2">
+<div class="w-full bg-primary-container/10 rounded-t-lg relative group h-full flex items-end">
+<div class="bg-primary w-full rounded-t-lg transition-all duration-700 h-[75%] group-hover:bg-secondary"></div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">FRI</span>
+</div>
+</div>
+</section>
+<!-- Staff Performance Overview -->
+<section class="space-y-4">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-primary">Staff Performance</h2>
+<button class="text-primary font-label-caps hover:underline">View All</button>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden">
+<!-- Staff Item 1 -->
+<div class="p-4 flex flex-col gap-3 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img alt="Staff" class="w-10 h-10 rounded-full bg-surface-variant" data-alt="A detailed digital avatar icon of a young professional corporate staff member. The avatar is clean and modern, with minimal shadows and a vibrant, professional color palette. The setting is a neutral, light-gray background that complements a high-end enterprise management application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBop9-vSRi5OEDQ3_9DF5GEkiywKpK6O6f9T7KmQdPAd18LvhQo-01jVcdjyVo-SuugYng1uaRO-3uJeORu1B_0aR9N0fQzdRna5eeE8ZF63tvqHCZ2FErVMPadjE995QHmm8Ahmiz67iiNaUjbOKXFt8N5Y4QcEY7Rn5jQzN2VG-f3wqIn5lvQ1qfErAbxQEn_o4c1aHKkZoSCrcTLYkycQtDZ65tPhbdBjBZ2_swssX2Sk2yPl31VYAeVUkak3C9aAPgVFuFQGz0L"/>
+<div>
+<h3 class="font-body-lg font-bold text-primary">Aris Setiawan</h3>
+<p class="font-body-md text-on-surface-variant text-xs">Senior Analyst</p>
+</div>
+</div>
+<span class="px-2 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase">On Track</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-label-caps text-outline uppercase">
+<span>Workload</span>
+<span>85%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+<!-- Staff Item 2 -->
+<div class="p-4 flex flex-col gap-3 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img alt="Staff" class="w-10 h-10 rounded-full bg-surface-variant" data-alt="A professional avatar of a female office worker with a focused and intelligent expression. The visual style is contemporary and sleek, utilizing soft lighting and a crisp vector-like finish. The design follows a strict minimalist aesthetic suitable for an executive-level performance monitoring dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXGIUJY6ngEMdJ3nstXT0GnBoR-peJFwwBvbqBfL_AYICMvxXMZfA685S2Hn6uqUHLaYmwp2xMt2k7-XEHEQFbnPQ_FCg9Kd6N1QcQq7tKPYlQaLmA_yhvpy3bu4ZA0UZTHIpcxNdW0DotC9UVbvMMhOXdQDUdFPECO_3VzAmr8v1JY5nFHNGf5n_6oTf5UNshSXZqulsCqc1raQE52dVC1t5Zoo78i9LwVSnac8_oEZUvu6PMB6piQuN9eATNxSQpYdODT8jYINzg"/>
+<div>
+<h3 class="font-body-lg font-bold text-primary">Dewi Lestari</h3>
+<p class="font-body-md text-on-surface-variant text-xs">Lead Developer</p>
+</div>
+</div>
+<span class="px-2 py-1 bg-error-container text-on-error-container text-[10px] font-bold rounded-full uppercase">Need Attention</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-label-caps text-outline uppercase">
+<span>Workload</span>
+<span>42%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-error h-full w-[42%]"></div>
+</div>
+</div>
+</div>
+<!-- Staff Item 3 -->
+<div class="p-4 flex flex-col gap-3 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img alt="Staff" class="w-10 h-10 rounded-full bg-surface-variant" data-alt="A sophisticated avatar portrait of a corporate professional male in a clean business-casual style. The lighting is balanced and soft, creating a calm and dependable persona. The image is designed to integrate seamlessly into a premium dark-themed or high-contrast corporate user interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrjxus22Vj_IuZzrZPIKnVoPypSi0zugFGVi4e4i43Ky8vnzeLyque-t7XnmSk29bQKn_u60Xlkqf3Hf1diSH8YmQf_y-gtkE8kYsYs-rIA2pD9uczo8LoA0wp_ExA2DTq9fuvjinorzB5UpBC4L4m3Y3U9T-Ik3EupczR2U8B32gDx4dShlAQ4GEjh40AA9GxEDhEbZ0oD7SOeqqXNWJ6D0yvw9fzAwHUNYkRrKTl0mAsm1tQ_gf8g1YD1wsv_VNvzxyT25tRpPtZ"/>
+<div>
+<h3 class="font-body-lg font-bold text-primary">Budi Raharjo</h3>
+<p class="font-body-md text-on-surface-variant text-xs">Project Manager</p>
+</div>
+</div>
+<span class="px-2 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase">On Track</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-label-caps text-outline uppercase">
+<span>Workload</span>
+<span>92%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[92%]"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-container-margin py-2 pb-safe bg-surface border-t border-outline-variant shadow-sm">
+<!-- Overview (Active) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl p-2 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-[10px] mt-1">Overview</span>
+</a>
+<!-- Projects -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps text-[10px] mt-1">Projects</span>
+</a>
+<!-- Staff -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-[10px] mt-1">Staff</span>
+</a>
+<!-- Reports -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-[10px] mt-1">Reports</span>
+</a>
+</nav>
+<script>
+        // Simple click interaction for the bars
+        document.querySelectorAll('.group').forEach(bar => {
+            bar.addEventListener('click', () => {
+                const child = bar.querySelector('div');
+                const originalHeight = child.style.height;
+                child.style.height = '100%';
+                setTimeout(() => {
+                    child.style.height = originalHeight;
+                }, 1000);
+            });
+        });
+
+        // Toggle mobile dark mode helper (for testing if needed)
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+    </script>
+</body></html>

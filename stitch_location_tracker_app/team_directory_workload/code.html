@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Team Directory &amp; Workload Monitor</title>
+<!-- Google Fonts: Inter for the Design System -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols for Literal Transcription -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f2f4f6",
+                    "surface-container-high": "#e6e8ea",
+                    "on-tertiary": "#ffffff",
+                    "background": "#f7f9fb",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container": "#eceef0",
+                    "secondary-container": "#aeeecb",
+                    "inverse-surface": "#2d3133",
+                    "surface-bright": "#f7f9fb",
+                    "inverse-on-surface": "#eff1f3",
+                    "primary-fixed": "#d7e2ff",
+                    "secondary-fixed-dim": "#95d4b3",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-surface": "#191c1e",
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#3e1e00",
+                    "on-secondary-fixed-variant": "#0e5138",
+                    "on-tertiary-fixed-variant": "#6e3900",
+                    "primary-container": "#1b263b",
+                    "on-primary-fixed": "#101b30",
+                    "on-primary": "#ffffff",
+                    "primary": "#051125",
+                    "on-tertiary-fixed": "#2f1500",
+                    "on-secondary-container": "#316e52",
+                    "inverse-primary": "#bbc6e2",
+                    "tertiary-fixed-dim": "#ffb77d",
+                    "outline": "#75777d",
+                    "secondary-fixed": "#b1f0ce",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#d8dadc",
+                    "secondary": "#2c694e",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed": "#002114",
+                    "on-background": "#191c1e",
+                    "on-surface-variant": "#45474d",
+                    "primary-fixed-dim": "#bbc6e2",
+                    "surface-tint": "#545e76",
+                    "surface": "#f7f9fb",
+                    "outline-variant": "#c5c6cd",
+                    "on-tertiary-container": "#d57401",
+                    "tertiary-fixed": "#ffdcc3",
+                    "tertiary": "#200c00",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-primary-fixed-variant": "#3c475d",
+                    "on-primary-container": "#828da7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-gap": "16px",
+                    "section-padding": "24px",
+                    "inline-gap": "12px",
+                    "container-margin": "20px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "data-display": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "data-display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.03em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f7f9fb; /* Slate Gray base */
+            -webkit-font-smoothing: antialiased;
+        }
+        .tonal-layer-1 {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+        .progress-bar-track { background-color: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- TopAppBar (From Shared Components) -->
+<header class="bg-surface dark:bg-on-background w-full top-0 sticky border-b border-outline-variant dark:border-outline z-40">
+<div class="flex items-center justify-between px-container-margin py-base w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-inline-gap">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Executive Profile" data-alt="A professional studio portrait of a senior executive male in a dark navy blue suit. The lighting is soft and directional, highlighting a confident yet approachable expression against a clean, neutral gray background. The overall aesthetic is high-end corporate and sophisticated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAazZO2ZOGwTYdduEr29K-GGfOijqkOcXfCfw8oL_0LoTk4vJSQlSsqIfzncqwvlJfsOl2iByWMlJoCoq6zgxxvZ7VQo5XlfmVM4ZNZvQK84ly-NG1tdhmIq2AiMUsscvSAAzAqaRqTUCPtu8v76wmJBdiEvpgKIWKj7XPZ1KT-xW4zmcr2xo9foF05lPsR-OlajUfUnHn9D4mHp9duRu1tduNCLn6K5xaR1YkYjRMpLQITkuovg3N-OuVol8kvkjoiflgy3j-WtWWb"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">Team Directory</h1>
+</div>
+<button class="text-primary dark:text-primary-fixed p-2 hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-container-margin pt-section-padding pb-32">
+<!-- Search & Filter Section -->
+<section class="mb-stack-gap">
+<div class="flex gap-base">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-body-md transition-all outline-none" placeholder="Search team members..." type="text"/>
+</div>
+<button class="bg-surface-container-lowest border border-outline-variant p-3 rounded-lg hover:bg-surface-container-low transition-colors active:scale-95 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="tune">tune</span>
+</button>
+</div>
+<div class="flex gap-2 mt-4 overflow-x-auto pb-2 custom-scrollbar">
+<span class="px-3 py-1 bg-primary text-on-primary rounded-full font-label-caps text-label-caps flex items-center">All Teams</span>
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps flex items-center">Engineering</span>
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps flex items-center">Design</span>
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps flex items-center">Marketing</span>
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps flex items-center">Operations</span>
+</div>
+</section>
+<!-- KPI Summary (Contextual Component) -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-stack-gap mb-stack-gap">
+<div class="tonal-layer-1 p-4 rounded-xl">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Total Staff</p>
+<p class="font-data-display text-data-display text-primary">24</p>
+</div>
+<div class="tonal-layer-1 p-4 rounded-xl border-l-4 border-l-secondary">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Optimal Capacity</p>
+<p class="font-data-display text-data-display text-secondary">18</p>
+</div>
+<div class="tonal-layer-1 p-4 rounded-xl border-l-4 border-l-on-tertiary-container">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">High Workload</p>
+<p class="font-data-display text-data-display text-on-tertiary-container">4</p>
+</div>
+<div class="tonal-layer-1 p-4 rounded-xl border-l-4 border-l-error">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Critical Risk</p>
+<p class="font-data-display text-data-display text-error">2</p>
+</div>
+</div>
+<!-- Team List Section -->
+<section class="space-y-4">
+<h2 class="font-headline-sm text-headline-sm text-primary mb-4">Active Directory</h2>
+<!-- Card 1: Normal Workload -->
+<div class="tonal-layer-1 p-5 rounded-xl flex items-center gap-4 hover:border-primary transition-all cursor-pointer group">
+<img alt="Sarah Chen" class="w-14 h-14 rounded-full object-cover border border-outline-variant" data-alt="A focused female software engineer in a modern, brightly lit office. She is wearing a professional charcoal blazer. The background is softly blurred showing high-tech monitors and indoor plants, creating a calm and productive atmosphere using a light-mode slate and white palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLGGhChcvgoQwpEythFU9bScAFnOEiltwwmk541UfUg6BXBtJfYL_FSeKxMSlcL7Ly4J0EEHmK3dr7GpHWxXck3u6mF6rrDATEUtcqFlZc6fUHcXoF8Ey4x-fA0X8qOTRh3sITCiSNs5xVg4ADVxJ_5gFwTQ1d0Zo7sXtvKfc3lDOpWvxfkdpu1A8sTdviU5nEu9N9Gl91xQCPY4RhbBaJqhkjgDR1vHIiXmLrSyvMEPyomdVXwV76VbFe-fd-zcxeiz2AJdy9ufOF"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary truncate">Sarah Chen</h3>
+<p class="font-body-md text-on-surface-variant">Senior Frontend Developer</p>
+</div>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded font-label-caps text-[10px] uppercase">Normal</span>
+</div>
+<div class="mt-3">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body-md text-on-surface-variant">3 Active Tasks, 0 Overdue</span>
+<span class="font-label-caps text-label-caps text-secondary">40%</span>
+</div>
+<div class="h-2 w-full progress-bar-track rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[40%] transition-all duration-1000"></div>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Card 2: High Workload -->
+<div class="tonal-layer-1 p-5 rounded-xl flex items-center gap-4 hover:border-primary transition-all cursor-pointer group">
+<img alt="Marcus Wright" class="w-14 h-14 rounded-full object-cover border border-outline-variant" data-alt="A male creative director with glasses, looking thoughtful in a professional studio setting. He wears a premium navy turtleneck. The lighting is crisp and modern, emphasizing a sophisticated corporate aesthetic with high contrast between deep navy and bright white highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8gTqT4N_im7W6tDaVA-PNoH3FQSHu9TduAd8KEsE2kZ6BOGC75fKhUj1hz6kFpbCz3Y5ldpYP0Bjk_AloX16BMrW0aIjHWqlatipSFk9GdpudBkp2atjFSCzt4OHY-WYY3Y3nC9HIwHpNbANwIcreWH50S3st-AguVB6xYaHNa8OSQxKOeIrWt7s0WRmm2wh1fNyKqC9bLOXZbYlt4IjIG2plLZgBXqEOvPl9Du4D8Z_Aig032MwYcy8999hbN0_CiSe3PExIDSEO"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary truncate">Marcus Wright</h3>
+<p class="font-body-md text-on-surface-variant">Lead Product Designer</p>
+</div>
+<span class="px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-container rounded font-label-caps text-[10px] uppercase">High</span>
+</div>
+<div class="mt-3">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body-md text-on-surface-variant">7 Active Tasks, 1 Overdue</span>
+<span class="font-label-caps text-label-caps text-on-tertiary-container">85%</span>
+</div>
+<div class="h-2 w-full progress-bar-track rounded-full overflow-hidden">
+<div class="h-full bg-on-tertiary-container w-[85%] transition-all duration-1000"></div>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Card 3: Burnout Risk -->
+<div class="tonal-layer-1 p-5 rounded-xl flex items-center gap-4 hover:border-primary transition-all cursor-pointer group">
+<img alt="Elena Rodriguez" class="w-14 h-14 rounded-full object-cover border border-outline-variant" data-alt="A professional woman in medical tech leadership, wearing a white button-down shirt. The setting is a minimalist, clean laboratory environment with bright clinical lighting. The image emphasizes precision and authority through a restricted color palette of white, slate, and deep shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2HRgWx4iaaSwNQz5ker2qflsiFbAlY-rjnI6bGCWobVkpa5m8xek_UyWkCdYQH5nsM9DtNbLizGqoBGhBS71GWcHXz1XyjWjcQYQCj4sf45yUh57He4Zd94CXa8od0hsModjty0l8PDn8ARSytQBA3ETB3-ikhu9fKOt440sCXaeUyEal-yIKrcvxgIQ0do5SDjWSt9H_ZWclH1icuSiJazkJI1jyeVwGh5ckcPKjyxLx07QH5GvsvXGfKyjn8IFsAEWXcjBo1JuJ"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary truncate">Elena Rodriguez</h3>
+<p class="font-body-md text-on-surface-variant">Project Coordinator</p>
+</div>
+<span class="px-2 py-0.5 bg-error-container text-on-error-container rounded font-label-caps text-[10px] uppercase">At Risk</span>
+</div>
+<div class="mt-3">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body-md text-on-surface-variant">5 Active Tasks, 3 Overdue</span>
+<span class="font-label-caps text-label-caps text-error">95%</span>
+</div>
+<div class="h-2 w-full progress-bar-track rounded-full overflow-hidden">
+<div class="h-full bg-error w-[95%] transition-all duration-1000"></div>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Card 4: Normal Workload -->
+<div class="tonal-layer-1 p-5 rounded-xl flex items-center gap-4 hover:border-primary transition-all cursor-pointer group">
+<img alt="Jordan Smith" class="w-14 h-14 rounded-full object-cover border border-outline-variant" data-alt="A portrait of a male data analyst in a clean modern workspace. He is wearing a dark grey polo shirt. The background consists of minimalist architectural lines and soft natural light, reflecting a dependable and sophisticated corporate culture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOpx3aKllW-dSWud9NsLUWw-qLVT6cmSEE3Kje3nJv6QvvWXRlozEHlGBfoAkZv7EXE92ZLYPNyka_7kjNAvA1zD2mRKB3gldERu0XU0LaSzE7EYKsn6VaFn1xSAPwrPNFpWZv-7uLTX-I01lUK07aIxFWmTiFGn1Xl7YSdIBl1MriXxH89LU4-BCpXZJyw_xSbedlHS-jlH2hQsxxaBGZsg8JaUcBACjIkPQXHEmHeiiOs5Ai7FGNemWNODgkTwd789LxpxbMqS-x"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary truncate">Jordan Smith</h3>
+<p class="font-body-md text-on-surface-variant">Data Analyst</p>
+</div>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded font-label-caps text-[10px] uppercase">Normal</span>
+</div>
+<div class="mt-3">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body-md text-on-surface-variant">2 Active Tasks, 0 Overdue</span>
+<span class="font-label-caps text-label-caps text-secondary">25%</span>
+</div>
+<div class="h-2 w-full progress-bar-track rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[25%] transition-all duration-1000"></div>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (From Shared Components) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-container-margin py-2 pb-safe border-t border-outline-variant dark:border-outline bg-surface dark:bg-on-background shadow-sm">
+<!-- Overview -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Overview</span>
+</a>
+<!-- Projects -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="assignment">assignment</span>
+<span class="font-label-caps text-label-caps">Projects</span>
+</a>
+<!-- Staff (ACTIVE) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-secondary-fixed rounded-xl p-2 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-label-caps text-label-caps">Staff</span>
+</a>
+<!-- Reports -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="analytics">analytics</span>
+<span class="font-label-caps text-label-caps">Reports</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for cards
+        document.querySelectorAll('.tonal-layer-1').forEach(card => {
+            card.addEventListener('mousedown', () => {
+                card.style.transform = 'scale(0.98)';
+            });
+            card.addEventListener('mouseup', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+
+        // Simple department filter logic simulation
+        const chips = document.querySelectorAll('.font-label-caps.flex.items-center');
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chips.forEach(c => {
+                    c.classList.remove('bg-primary', 'text-on-primary');
+                    c.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+                });
+                chip.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+                chip.classList.add('bg-primary', 'text-on-primary');
+            });
+        });
+    </script>
+</body></html>
