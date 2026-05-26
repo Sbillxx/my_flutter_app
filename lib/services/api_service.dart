@@ -63,7 +63,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getDashboard() async {
     final fallback = {
       'kpis': {
-        'totalTasks': 124,
+        'totalProjects': 4,
         'delayedTasks': 8,
         'activeStaff': 42,
       },
@@ -384,13 +384,14 @@ class ApiService {
   }
 
   // 7. Add Project API
-  static Future<Map<String, dynamic>> addProject(String name, String description, String targetDate, String workload, String division) async {
+  static Future<Map<String, dynamic>> addProject(String name, String description, String targetDate, String workload, String division, List<String> assignedStaff) async {
     final body = {
       'name': name,
       'description': description,
       'targetDate': targetDate,
       'workload': workload,
       'division': division,
+      'assignedStaff': assignedStaff,
     };
     final mockNewProj = {
       'id': DateTime.now().millisecondsSinceEpoch,
@@ -400,13 +401,58 @@ class ApiService {
       'progress': 0.0,
       'workload': workload,
       'division': division,
+      'assignedStaff': assignedStaff,
     };
     return _post('/projects', body, mockNewProj);
+  }
+
+  // 7b. Update Project API
+  static Future<Map<String, dynamic>> updateProject(int id, String name, String description, String targetDate, String workload, String division, List<String> assignedStaff) async {
+    final body = {
+      'name': name,
+      'description': description,
+      'targetDate': targetDate,
+      'workload': workload,
+      'division': division,
+      'assignedStaff': assignedStaff,
+    };
+    final mockUpdatedProj = {
+      'id': id,
+      'name': name,
+      'description': description,
+      'targetDate': targetDate,
+      'progress': 0.5,
+      'workload': workload,
+      'division': division,
+      'assignedStaff': assignedStaff,
+    };
+    return _post('/projects/$id', body, mockUpdatedProj);
+  }
+
+  // 7c. Delete Project API
+  static Future<Map<String, dynamic>> deleteProject(int id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/projects/$id')).timeout(const Duration(seconds: 3));
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        if (decoded['status'] == 'success') {
+          return decoded;
+        }
+      }
+      debugPrint('API Error on DELETE /projects/$id: Status ${response.statusCode}, falling back.');
+    } catch (e) {
+      debugPrint('API Connection failed on DELETE /projects/$id: $e. Falling back.');
+    }
+    return {'status': 'success', 'message': 'Simulasi Berhasil! (Offline Fallback)'};
   }
 
   // 8. Reports API
   static Future<Map<String, dynamic>> getReports() async {
     final fallback = {
+      'metrics': {
+        'globalEfficiency': '92.4%',
+        'averageWorkload': '72.8%',
+      },
       'reports': [
         {
           'title': 'Laporan Kinerja Instansi Pemerintah (LKIP) 2025',
@@ -491,5 +537,51 @@ class ApiService {
   // 10. Mark All Read
   static Future<Map<String, dynamic>> readAllNotifications() async {
     return _post('/notifications/read-all', {}, {});
+  }
+
+  // 11. Get User Profile API
+  static Future<Map<String, dynamic>> getProfile() async {
+    final fallback = {
+      'name': 'Kepala',
+      'email': 'executive@kominfo.go.id',
+      'avatarUrl': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjPYthawamKptO2svXYC5fv264uFWWqQl9In0-GIhvdJMYbhV91YV9oAn2yg7r43B96sIFx5ecN_i4KNfN2pysyEnFB3xtlQ8-fQLACG6d-HN-MC_1CZkmrqyplTuoFpHs2qIu4ZyYphrM8yyKitoUygP9PlXww_CrNTgeIqyjop4D1BP74xVjeeWioLaIC1vtzYb7yHgXD5LuDqTH00v1sHmVKNKIYYwjyZtXmz-3munyX0ZhkPP5KF1IoscqtqdI7EGTUN1IlIyy',
+    };
+    return _get('/profile', fallback);
+  }
+
+  // 12. Update User Profile API
+  static Future<Map<String, dynamic>> updateProfile(String name, String email) async {
+    final body = {
+      'name': name,
+      'email': email,
+    };
+    final fallback = {
+      'name': name,
+      'email': email,
+      'avatarUrl': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjPYthawamKptO2svXYC5fv264uFWWqQl9In0-GIhvdJMYbhV91YV9oAn2yg7r43B96sIFx5ecN_i4KNfN2pysyEnFB3xtlQ8-fQLACG6d-HN-MC_1CZkmrqyplTuoFpHs2qIu4ZyYphrM8yyKitoUygP9PlXww_CrNTgeIqyjop4D1BP74xVjeeWioLaIC1vtzYb7yHgXD5LuDqTH00v1sHmVKNKIYYwjyZtXmz-3munyX0ZhkPP5KF1IoscqtqdI7EGTUN1IlIyy',
+    };
+    return _post('/profile', body, fallback);
+  }
+
+  // 13. Update User Avatar API
+  static Future<Map<String, dynamic>> updateAvatar(String avatarUrl) async {
+    final body = {
+      'avatarUrl': avatarUrl,
+    };
+    final fallback = {
+      'name': 'Kepala',
+      'email': 'executive@kominfo.go.id',
+      'avatarUrl': avatarUrl,
+    };
+    return _post('/profile/avatar', body, fallback);
+  }
+
+  // 14. Reset Password API
+  static Future<Map<String, dynamic>> resetPassword(String currentPassword, String newPassword) async {
+    final body = {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    };
+    return _post('/profile/reset-password', body, {});
   }
 }

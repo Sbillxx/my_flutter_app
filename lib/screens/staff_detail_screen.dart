@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme.dart';
 import '../widgets/notification_sheet.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 
 class StaffDetailScreen extends StatefulWidget {
   final int staffId;
@@ -79,6 +80,30 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  /// Ambil notif terbaru dari backend dan tampilkan yang BARU (ID baru) ke System Drawer.
+  /// Dipanggil setelah berhasil assign task agar notif langsung muncul.
+  Future<void> _checkAndShowNewNotifications() async {
+    try {
+      final notificationsResponse = await ApiService.getNotifications();
+      if (notificationsResponse['status'] == 'success') {
+        final List<dynamic> notifs = notificationsResponse['data']['notifications'] ?? [];
+        for (var notif in notifs) {
+          final int id = notif['id'] as int;
+          final bool isRead = notif['isRead'] as bool;
+          if (!isRead) {
+            await NotificationService.showNotification(
+              id: id,
+              title: notif['title'] as String,
+              body: notif['desc'] as String,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to check new notifications: $e');
     }
   }
 
@@ -217,6 +242,9 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                           _activeLocalTab = 0; // Pindahkan fokus ke tab Active Tasks agar langsung terlihat
                         });
                         _loadStaffDetail(); // Reload
+
+                        // Trigger cek notif baru dari backend agar muncul di System Drawer
+                        _checkAndShowNewNotifications();
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -602,9 +630,9 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                                         const SizedBox(height: 12),
                                         Expanded(
                                           child: _buildMetricCard(
-                                            title: 'CAPACITY UTILIZATION',
+                                            title: 'PROGRES PROYEK',
                                             value: '$_workloadPercentage%',
-                                            desc: 'Total active allocation',
+                                            desc: 'Rata-rata progres proyek',
                                           ),
                                         ),
                                       ],

@@ -413,7 +413,7 @@ class _StaffDirectoryTabState extends State<StaffDirectoryTab> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            'CAPACITY UTILIZATION',
+                                            'PROGRES PROYEK',
                                             style: textTheme.labelLarge?.copyWith(
                                               fontSize: 9,
                                               color: CorporateTheme.onSurfaceVariant,

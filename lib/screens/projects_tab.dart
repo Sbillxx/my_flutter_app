@@ -15,12 +15,27 @@ class _ProjectsTabState extends State<ProjectsTab> {
   String _statusFilter = 'ALL'; // ALL, ON TRACK, AT RISK, DELAYED
   bool _isLoading = true;
   List<dynamic> _projects = [];
+  List<dynamic> _allStaff = [];
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadProjects();
+    _loadStaff();
+  }
+
+  Future<void> _loadStaff() async {
+    try {
+      final response = await ApiService.getStaff();
+      if (mounted && response['status'] == 'success') {
+        setState(() {
+          _allStaff = response['data']['staff'] ?? [];
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load staff: $e');
+    }
   }
 
   @override
@@ -57,7 +72,7 @@ class _ProjectsTabState extends State<ProjectsTab> {
     final descController = TextEditingController();
     final dateController = TextEditingController();
     String selectedWorkload = 'NORMAL'; // 'NORMAL', 'HIGH', 'AT RISK'
-    String selectedDivision = 'Engineering'; // 'Engineering', 'Design', 'Operations', 'Marketing'
+    List<String> selectedStaff = [];
 
     showModalBottomSheet(
       context: context,
@@ -145,25 +160,61 @@ class _ProjectsTabState extends State<ProjectsTab> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Divisi Penanggung Jawab
+                      // Tim Penanggung Jawab (Pilih Multipel)
                       Text(
-                        'DIVISI PENANGGUNG JAWAB',
+                        'TIM PENANGGUNG JAWAB (PILIH MULTIPEL)',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 10),
                       ),
                       const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: selectedDivision,
-                        items: ['Engineering', 'Design', 'Operations', 'Marketing'].map((div) {
-                          return DropdownMenuItem(value: div, child: Text(div));
-                        }).toList(),
-                        onChanged: (val) {
-                          setSheetState(() {
-                            selectedDivision = val ?? 'Engineering';
-                          });
-                        },
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 180),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _allStaff.length,
+                          itemBuilder: (context, index) {
+                            final staff = _allStaff[index];
+                            final String name = (staff['name'] ?? staff['nama'] ?? 'Staf') as String;
+                            final String role = (staff['role'] ?? staff['jabatan'] ?? 'Anggota') as String;
+                            final bool isChecked = selectedStaff.contains(name);
+
+                            return CheckboxListTile(
+                              value: isChecked,
+                              activeColor: CorporateTheme.success,
+                              checkColor: Colors.white,
+                              title: Text(
+                                name,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                              subtitle: Text(
+                                role,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: CorporateTheme.onSurfaceVariant,
+                                ),
+                              ),
+                              onChanged: (bool? value) {
+                                setSheetState(() {
+                                  if (value == true) {
+                                    selectedStaff.add(name);
+                                  } else {
+                                    selectedStaff.remove(name);
+                                  }
+                                });
+                              },
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                              dense: true,
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -232,13 +283,27 @@ class _ProjectsTabState extends State<ProjectsTab> {
                             ),
                           );
 
+                          // Tentukan divisi secara otomatis berdasarkan staf pertama yang dipilih
+                          String division = 'Engineering';
+                          if (selectedStaff.isNotEmpty) {
+                            final firstStaffName = selectedStaff.first;
+                            final match = _allStaff.firstWhere(
+                              (s) => (s['name'] ?? s['nama']) == firstStaffName,
+                              orElse: () => null,
+                            );
+                            if (match != null && (match['department'] ?? match['divisi']) != null) {
+                              division = (match['department'] ?? match['divisi']) as String;
+                            }
+                          }
+
                           // Simpan ke API
                           final result = await ApiService.addProject(
                             nameController.text,
                             descController.text.isNotEmpty ? descController.text : 'Tidak ada deskripsi.',
                             dateController.text.isNotEmpty ? dateController.text : 'Tenggat: Belum ditentukan',
                             selectedWorkload,
-                            selectedDivision,
+                            division,
+                            selectedStaff,
                           );
 
                           if (!context.mounted) return;
@@ -269,6 +334,382 @@ class _ProjectsTabState extends State<ProjectsTab> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                         child: const Text('SIMPAN PROYEK', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditProjectBottomSheet(dynamic proj) {
+    final nameController = TextEditingController(text: proj['name'] as String);
+    final descController = TextEditingController(text: proj['description'] as String);
+    final dateController = TextEditingController(text: proj['targetDate'] as String);
+    String selectedWorkload = proj['workload'] as String;
+    List<String> selectedStaff = List<String>.from(proj['assignedStaff'] ?? []);
+    final int projId = proj['id'] as int;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                padding: const EdgeInsets.all(20.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: CorporateTheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'EDIT DETAIL PROYEK',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                          color: CorporateTheme.primaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Nama Proyek
+                      Text(
+                        'NAMA PROYEK',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 10),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                          hintText: 'Masukkan nama inisiatif...',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Deskripsi
+                      Text(
+                        'DESKRIPSI PROYEK',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 10),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: descController,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          hintText: 'Tuliskan deskripsi ringkas...',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Target Tenggat Waktu
+                      Text(
+                        'BEBAN TARGET SELESAI (DEADLINE)',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 10),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: dateController,
+                        decoration: InputDecoration(
+                          hintText: 'Contoh: 15 Jun 2026 atau 30 Jun 2026',
+                          prefixIcon: const Icon(Icons.calendar_today, size: 16),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Tim Penanggung Jawab (Pilih Multipel)
+                      Text(
+                        'TIM PENANGGUNG JAWAB (PILIH MULTIPEL)',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 10),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 180),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _allStaff.length,
+                          itemBuilder: (context, index) {
+                            final staff = _allStaff[index];
+                            final String name = (staff['name'] ?? staff['nama'] ?? 'Staf') as String;
+                            final String role = (staff['role'] ?? staff['jabatan'] ?? 'Anggota') as String;
+                            final bool isChecked = selectedStaff.contains(name);
+
+                            return CheckboxListTile(
+                              value: isChecked,
+                              activeColor: CorporateTheme.success,
+                              checkColor: Colors.white,
+                              title: Text(
+                                name,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                              subtitle: Text(
+                                role,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: CorporateTheme.onSurfaceVariant,
+                                ),
+                              ),
+                              onChanged: (bool? value) {
+                                setSheetState(() {
+                                  if (value == true) {
+                                    selectedStaff.add(name);
+                                  } else {
+                                    selectedStaff.remove(name);
+                                  }
+                                });
+                              },
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                              dense: true,
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Estimasi Beban Kerja
+                      Text(
+                        'ESTIMASI BEBAN KERJA',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 10),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: ['NORMAL', 'HIGH', 'AT RISK'].map((workload) {
+                          final bool isSelected = selectedWorkload == workload;
+                          Color color = CorporateTheme.success;
+                          if (workload == 'HIGH') color = CorporateTheme.warning;
+                          if (workload == 'AT RISK') color = CorporateTheme.error;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: ChoiceChip(
+                              label: Text(
+                                workload,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : color,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              selected: isSelected,
+                              selectedColor: color,
+                              backgroundColor: color.withOpacity(0.1),
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setSheetState(() {
+                                    selectedWorkload = workload;
+                                  });
+                                }
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 24),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final bool? confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Hapus Proyek', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    content: Text('Apakah Anda yakin ingin menghapus inisiatif proyek "${proj['name']}"? Tindakan ini tidak dapat dibatalkan.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('BATAL', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('HAPUS', style: TextStyle(color: CorporateTheme.error, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (confirm == true) {
+                                  if (!context.mounted) return;
+                                  Navigator.pop(context); // Close bottom sheet
+
+                                  // Tampilkan loading snackbar
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text('Menghapus proyek dari database...'),
+                                        ],
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+
+                                  // Panggil API Hapus
+                                  final result = await ApiService.deleteProject(projId);
+
+                                  if (!context.mounted) return;
+
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                                  if (result['status'] == 'success') {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            const Icon(Icons.delete_forever, color: Colors.white),
+                                            const SizedBox(width: 8),
+                                            Text('Proyek "${proj['name']}" berhasil dihapus.'),
+                                          ],
+                                        ),
+                                        backgroundColor: CorporateTheme.error,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                    _loadProjects(); // Reload projects
+                                  }
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: CorporateTheme.error,
+                                side: const BorderSide(color: CorporateTheme.error, width: 1.5),
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              icon: const Icon(Icons.delete_outline, size: 18),
+                              label: const Text('HAPUS', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (nameController.text.isEmpty) return;
+
+                                Navigator.pop(context);
+
+                                // Tampilkan loading snackbar
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Text('Memperbarui proyek di database...'),
+                                      ],
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+
+                                // Tentukan divisi secara otomatis berdasarkan staf pertama yang dipilih
+                                String division = 'Engineering';
+                                if (selectedStaff.isNotEmpty) {
+                                  final firstStaffName = selectedStaff.first;
+                                  final match = _allStaff.firstWhere(
+                                    (s) => (s['name'] ?? s['nama']) == firstStaffName,
+                                    orElse: () => null,
+                                  );
+                                  if (match != null && (match['department'] ?? match['divisi']) != null) {
+                                    division = (match['department'] ?? match['divisi']) as String;
+                                  }
+                                }
+
+                                // Perbarui di API
+                                final result = await ApiService.updateProject(
+                                  projId,
+                                  nameController.text,
+                                  descController.text.isNotEmpty ? descController.text : 'Tidak ada deskripsi.',
+                                  dateController.text.isNotEmpty ? dateController.text : 'Tenggat: Belum ditentukan',
+                                  selectedWorkload,
+                                  division,
+                                  selectedStaff,
+                                );
+
+                                if (!context.mounted) return;
+
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                                if (result['status'] == 'success') {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          const Icon(Icons.check_circle_outline, color: Colors.white),
+                                          const SizedBox(width: 8),
+                                          Text('Proyek "${nameController.text}" berhasil diperbarui!'),
+                                        ],
+                                      ),
+                                      backgroundColor: CorporateTheme.success,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  _loadProjects(); // Reload projects
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: CorporateTheme.primaryContainer,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('SIMPAN', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -510,6 +951,40 @@ class _ProjectsTabState extends State<ProjectsTab> {
                                         ),
                                       ),
                                       const SizedBox(height: 16),
+                                      if (proj['assignedStaff'] != null && (proj['assignedStaff'] as List).isNotEmpty) ...[
+                                        Text(
+                                          'TIM PENANGGUNG JAWAB',
+                                          style: textTheme.labelLarge?.copyWith(
+                                            fontSize: 9,
+                                            color: CorporateTheme.onSurfaceVariant,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 4,
+                                          children: (proj['assignedStaff'] as List<dynamic>).map((staffName) {
+                                            return Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF1F5F9),
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                              ),
+                                              child: Text(
+                                                staffName as String,
+                                                style: textTheme.labelLarge?.copyWith(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: const Color(0xFF1E293B),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                        const SizedBox(height: 16),
+                                      ],
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
@@ -542,14 +1017,36 @@ class _ProjectsTabState extends State<ProjectsTab> {
                                       ),
                                       const SizedBox(height: 12),
                                       Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Icon(Icons.calendar_today_outlined, size: 12, color: CorporateTheme.outline),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            proj['targetDate'] as String,
-                                            style: textTheme.labelLarge?.copyWith(
-                                              fontSize: 10,
-                                              color: CorporateTheme.onSurfaceVariant,
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.calendar_today_outlined, size: 12, color: CorporateTheme.outline),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                proj['targetDate'] as String,
+                                                style: textTheme.labelLarge?.copyWith(
+                                                  fontSize: 10,
+                                                  color: CorporateTheme.onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          GestureDetector(
+                                            onTap: () => _showEditProjectBottomSheet(proj),
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.edit, size: 12, color: CorporateTheme.primary),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'EDIT',
+                                                  style: textTheme.labelLarge?.copyWith(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: CorporateTheme.primary,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],

@@ -12,6 +12,8 @@ class ReportsTab extends StatefulWidget {
 class _ReportsTabState extends State<ReportsTab> {
   bool _isLoading = true;
   List<dynamic> _reports = [];
+  String _globalEfficiency = '92.4%';
+  String _averageWorkload = '72.8%';
 
   @override
   void initState() {
@@ -29,6 +31,10 @@ class _ReportsTabState extends State<ReportsTab> {
       if (mounted && response['status'] == 'success') {
         setState(() {
           _reports = response['data']['reports'] ?? [];
+          if (response['data']['metrics'] != null) {
+            _globalEfficiency = response['data']['metrics']['globalEfficiency'] ?? '92.4%';
+            _averageWorkload = response['data']['metrics']['averageWorkload'] ?? '72.8%';
+          }
           _isLoading = false;
         });
       }
@@ -96,7 +102,7 @@ class _ReportsTabState extends State<ReportsTab> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '92.4%',
+                                _globalEfficiency,
                                 style: CorporateTheme.dataDisplay(
                                   color: CorporateTheme.success,
                                 ).copyWith(fontSize: 24),
@@ -124,7 +130,7 @@ class _ReportsTabState extends State<ReportsTab> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '72.8%',
+                                _averageWorkload,
                                 style: CorporateTheme.dataDisplay(
                                   color: CorporateTheme.warning,
                                 ).copyWith(fontSize: 24),
@@ -140,7 +146,7 @@ class _ReportsTabState extends State<ReportsTab> {
 
                 // Sub-Header List Laporan
                 Text(
-                  'DOKUMEN SAKIP & PKPT UTAMA',
+                  'DOKUMEN LAPORAN',
                   style: textTheme.labelLarge?.copyWith(
                     color: CorporateTheme.onSurfaceVariant,
                     letterSpacing: 1.5,

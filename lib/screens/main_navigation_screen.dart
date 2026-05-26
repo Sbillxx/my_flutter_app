@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../theme.dart';
 import 'overview_tab.dart';
 import 'projects_tab.dart';
 import 'staff_directory_tab.dart';
 import 'reports_tab.dart';
+import '../services/api_service.dart';
+import '../services/notification_service.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -14,6 +17,7 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  Timer? _notificationTimer;
 
   late final List<Widget> _tabs;
 
@@ -30,6 +34,38 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       StaffDirectoryTab(),
       const ReportsTab(),
     ];
+    _startNotificationPolling();
+  }
+
+  void _startNotificationPolling() {
+    // Polling berkala setiap 5 detik untuk notifikasi baru agar tersinkronisasi di OS status bar
+    _notificationTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      try {
+        final notificationsResponse = await ApiService.getNotifications();
+        if (notificationsResponse['status'] == 'success') {
+          final List<dynamic> notifs = notificationsResponse['data']['notifications'] ?? [];
+          for (var notif in notifs) {
+            final int id = notif['id'] as int;
+            final bool isRead = notif['isRead'] as bool;
+            if (!isRead) {
+              await NotificationService.showNotification(
+                id: id,
+                title: notif['title'] as String,
+                body: notif['desc'] as String,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to poll system notifications: $e');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _notificationTimer?.cancel();
+    super.dispose();
   }
 
   @override

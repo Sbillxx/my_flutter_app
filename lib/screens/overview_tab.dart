@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert';
 import '../theme.dart';
 import 'staff_detail_screen.dart';
+import 'profile_screen.dart';
 import '../widgets/notification_sheet.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 
 class OverviewTab extends StatefulWidget {
   final VoidCallback onNavigateToStaff;
@@ -19,8 +22,24 @@ class OverviewTab extends StatefulWidget {
 
 class _OverviewTabState extends State<OverviewTab> {
   bool _isLoading = true;
+  bool _isFirstLoad = true; // Flag untuk membedakan load pertama vs refresh
+  String _profileName = 'Kepala';
+  String _profileAvatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjPYthawamKptO2svXYC5fv264uFWWqQl9In0-GIhvdJMYbhV91YV9oAn2yg7r43B96sIFx5ecN_i4KNfN2pysyEnFB3xtlQ8-fQLACG6d-HN-MC_1CZkmrqyplTuoFpHs2qIu4ZyYphrM8yyKitoUygP9PlXww_CrNTgeIqyjop4D1BP74xVjeeWioLaIC1vtzYb7yHgXD5LuDqTH00v1sHmVKNKIYYwjyZtXmz-3munyX0ZhkPP5KF1IoscqtqdI7EGTUN1IlIyy';
+
+  ImageProvider _getImageProvider(String url) {
+    if (url.startsWith('data:image/') && url.contains(';base64,')) {
+      try {
+        final String base64Str = url.split(';base64,').last;
+        return MemoryImage(base64Decode(base64Str));
+      } catch (e) {
+        debugPrint('Error decoding base64 image: $e');
+      }
+    }
+    return NetworkImage(url);
+  }
+
   Map<String, dynamic> _kpis = {
-    'totalTasks': 124,
+    'totalProjects': 4,
     'delayedTasks': 8,
     'activeStaff': 42,
   };
@@ -38,16 +57,56 @@ class _OverviewTabState extends State<OverviewTab> {
     });
 
     try {
-      final response = await ApiService.getDashboard();
-      if (mounted && response['status'] == 'success') {
+      final dashboardResponse = await ApiService.getDashboard();
+      final profileResponse = await ApiService.getProfile();
+      final notificationsResponse = await ApiService.getNotifications();
+
+      if (mounted) {
         setState(() {
-          _kpis = response['data']['kpis'] ?? _kpis;
-          _topPerformers = response['data']['topPerformers'] ?? [];
+          if (dashboardResponse['status'] == 'success') {
+            _kpis = dashboardResponse['data']['kpis'] ?? _kpis;
+            _topPerformers = dashboardResponse['data']['topPerformers'] ?? [];
+          }
+          if (profileResponse['status'] == 'success') {
+            final prof = profileResponse['data'];
+            _profileName = prof['name'] ?? 'Kepala';
+            _profileAvatarUrl = prof['avatarUrl'] ?? _profileAvatarUrl;
+          }
           _isLoading = false;
         });
+
+        // Trigger real Android OS system drawer notifications for unread items
+        if (notificationsResponse['status'] == 'success') {
+          final List<dynamic> notifs = notificationsResponse['data']['notifications'] ?? [];
+
+          if (_isFirstLoad) {
+            // Saat load pertama, pre-populate semua ID yang sudah ada ke dalam
+            // set "sudah ditampilkan" agar tidak men-spam notif lama.
+            // Notif yang BENAR-BENAR BARU (ID baru) akan muncul pada refresh berikutnya.
+            for (var notif in notifs) {
+              final int id = notif['id'] as int;
+              NotificationService.markAsShown(id);
+            }
+            _isFirstLoad = false;
+          } else {
+            // Pada refresh berikutnya (setelah assign task/project, dll),
+            // hanya tampilkan notif yang belum pernah kita tampilkan sebelumnya (ID baru).
+            for (var notif in notifs) {
+              final int id = notif['id'] as int;
+              final bool isRead = notif['isRead'] as bool;
+              if (!isRead) {
+                await NotificationService.showNotification(
+                  id: id,
+                  title: notif['title'] as String,
+                  body: notif['desc'] as String,
+                );
+              }
+            }
+          }
+        }
       }
     } catch (e) {
-      debugPrint('Failed to load dashboard: $e');
+      debugPrint('Failed to load dashboard/profile/notifications: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -79,44 +138,62 @@ class _OverviewTabState extends State<OverviewTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: CorporateTheme.primaryContainer.withOpacity(0.2),
-                              width: 2,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ProfileScreen(),
                             ),
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                'https://lh3.googleusercontent.com/aida-public/AB6AXuDjPYthawamKptO2svXYC5fv264uFWWqQl9In0-GIhvdJMYbhV91YV9oAn2yg7r43B96sIFx5ecN_i4KNfN2pysyEnFB3xtlQ8-fQLACG6d-HN-MC_1CZkmrqyplTuoFpHs2qIu4ZyYphrM8yyKitoUygP9PlXww_CrNTgeIqyjop4D1BP74xVjeeWioLaIC1vtzYb7yHgXD5LuDqTH00v1sHmVKNKIYYwjyZtXmz-3munyX0ZhkPP5KF1IoscqtqdI7EGTUN1IlIyy',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          ).then((_) {
+                            _loadDashboardData();
+                          });
+                        },
+                        child: Row(
                           children: [
-                            Text(
-                              'Selamat Pagi, Kepala',
-                              style: textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: CorporateTheme.primaryContainer.withOpacity(0.2),
+                                  width: 2,
+                                ),
+                                image: DecorationImage(
+                                  image: _getImageProvider(_profileAvatarUrl),
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
-                            Text(
-                              'Division Lead',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: CorporateTheme.onSurfaceVariant,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Selamat Pagi, $_profileName',
+                                    style: textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'Division Lead',
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: CorporateTheme.onSurfaceVariant,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(
@@ -145,8 +222,8 @@ class _OverviewTabState extends State<OverviewTab> {
                         child: Row(
                           children: [
                             _buildScrollKPICard(
-                              title: 'TOTAL TASKS',
-                              value: _kpis['totalTasks'].toString(),
+                              title: 'TOTAL PROJECT',
+                              value: (_kpis['totalProjects'] ?? 0).toString(),
                               badgeText: '+12%',
                               badgeColor: CorporateTheme.success,
                               progressValue: 0.7,
@@ -187,22 +264,29 @@ class _OverviewTabState extends State<OverviewTab> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Weekly Productivity',
-                                  style: textTheme.headlineMedium,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Efficiency per department',
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: CorporateTheme.onSurfaceVariant,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Progres Proyek',
+                                    style: textTheme.headlineMedium,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Rata-rata progres proyek per anggota tim',
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: CorporateTheme.onSurfaceVariant,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             IconButton(
                               icon: const Icon(Icons.more_vert, color: CorporateTheme.outline),
                               onPressed: () => _showWeeklyProductivityMenu(context),
@@ -210,18 +294,25 @@ class _OverviewTabState extends State<OverviewTab> {
                           ],
                         ),
                         const SizedBox(height: 24),
-                        // Animating Bar Chart Area
-                        const SizedBox(
+                        // Animating Bar Chart Area (Dynamic)
+                        SizedBox(
                           height: 160,
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Expanded(child: InteractiveBar(label: 'MON', fillPercent: 0.65)),
-                              Expanded(child: InteractiveBar(label: 'TUE', fillPercent: 0.85)),
-                              Expanded(child: InteractiveBar(label: 'WED', fillPercent: 0.95, isSuccess: true)),
-                              Expanded(child: InteractiveBar(label: 'THU', fillPercent: 0.45)),
-                              Expanded(child: InteractiveBar(label: 'FRI', fillPercent: 0.75)),
-                            ],
+                            children: _topPerformers.map((staff) {
+                              final String name = staff['name'] as String;
+                              final String label = name.split(' ').first;
+                              final double progress = ((staff['workloadPercentage'] ?? 0) as num).toDouble() / 100.0;
+                              final bool isSuccess = progress >= 0.8;
+
+                              return Expanded(
+                                child: InteractiveBar(
+                                  label: label.toUpperCase(),
+                                  fillPercent: progress,
+                                  isSuccess: isSuccess,
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
                       ],
@@ -234,10 +325,15 @@ class _OverviewTabState extends State<OverviewTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Staff Performance',
-                      style: textTheme.headlineMedium,
+                    Expanded(
+                      child: Text(
+                        'Staff Performance',
+                        style: textTheme.headlineMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     TextButton(
                       onPressed: widget.onNavigateToStaff,
                       child: Text(
@@ -288,8 +384,13 @@ class _OverviewTabState extends State<OverviewTab> {
                                 ),
                                 itemBuilder: (context, index) {
                                   final staff = _topPerformers[index];
-                                  final double reliability = (staff['reliability'] as num).toDouble();
-                                  final bool onTrack = reliability >= 90;
+                                  final double progress = ((staff['workloadPercentage'] ?? 0) as num).toDouble();
+                                  final String status = (staff['status'] ?? 'NORMAL') as String;
+
+                                  Color statusColor = CorporateTheme.success;
+                                  if (status == 'HIGH') statusColor = CorporateTheme.warning;
+                                  if (status == 'AT RISK') statusColor = CorporateTheme.error;
+
                                   return ListTile(
                                     contentPadding: const EdgeInsets.all(16.0),
                                     onTap: () {
@@ -313,29 +414,32 @@ class _OverviewTabState extends State<OverviewTab> {
                                     title: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          staff['name'] as String,
-                                          style: textTheme.bodyLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
+                                        Expanded(
+                                          child: Text(
+                                            staff['name'] as String,
+                                            style: textTheme.bodyLarge?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
+                                        const SizedBox(width: 8),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 8,
                                             vertical: 2,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: onTrack
-                                                ? CorporateTheme.success.withOpacity(0.1)
-                                                : CorporateTheme.error.withOpacity(0.1),
+                                            color: statusColor.withOpacity(0.1),
                                             borderRadius: BorderRadius.circular(4),
                                           ),
                                           child: Text(
-                                            onTrack ? 'ON TRACK' : 'NEED ATTENTION',
+                                            status,
                                             style: textTheme.labelLarge?.copyWith(
                                               fontSize: 9,
                                               fontWeight: FontWeight.bold,
-                                              color: onTrack ? CorporateTheme.success : CorporateTheme.error,
+                                              color: statusColor,
                                             ),
                                           ),
                                         ),
@@ -350,20 +454,22 @@ class _OverviewTabState extends State<OverviewTab> {
                                             fontSize: 12,
                                             color: CorporateTheme.onSurfaceVariant,
                                           ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                         const SizedBox(height: 12),
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                              'RELIABILITY',
+                                              'PROGRES PROYEK',
                                               style: textTheme.labelLarge?.copyWith(
                                                 fontSize: 9,
                                                 color: CorporateTheme.onSurfaceVariant,
                                               ),
                                             ),
                                             Text(
-                                              '${reliability.toStringAsFixed(1)}%',
+                                              '${progress.toInt()}%',
                                               style: textTheme.labelLarge?.copyWith(
                                                 fontSize: 9,
                                                 color: CorporateTheme.primary,
@@ -375,11 +481,11 @@ class _OverviewTabState extends State<OverviewTab> {
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(9999),
                                           child: LinearProgressIndicator(
-                                            value: reliability / 100,
+                                            value: progress / 100,
                                             minHeight: 6,
                                             backgroundColor: const Color(0xFFF1F5F9),
                                             valueColor: AlwaysStoppedAnimation<Color>(
-                                              onTrack ? CorporateTheme.success : CorporateTheme.error,
+                                              statusColor,
                                             ),
                                           ),
                                         ),
@@ -438,9 +544,12 @@ class _OverviewTabState extends State<OverviewTab> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                value,
-                style: CorporateTheme.dataDisplay().copyWith(fontSize: 28),
+              Flexible(
+                child: Text(
+                  value,
+                  style: CorporateTheme.dataDisplay().copyWith(fontSize: 28),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(width: 4),
               isLive
@@ -459,12 +568,15 @@ class _OverviewTabState extends State<OverviewTab> {
                         ),
                       ),
                     )
-                  : Text(
-                      badgeText,
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: badgeColor,
+                  : Flexible(
+                      child: Text(
+                        badgeText,
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: badgeColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
             ],
@@ -521,6 +633,8 @@ class _OverviewTabState extends State<OverviewTab> {
                   _loadDashboardData();
                 },
               ),
+              // PDF & Excel exports hidden per user request
+              /*
               ListTile(
                 leading: const Icon(Icons.picture_as_pdf, color: CorporateTheme.error),
                 title: const Text('Ekspor Laporan PDF'),
@@ -547,6 +661,7 @@ class _OverviewTabState extends State<OverviewTab> {
                   );
                 },
               ),
+              */
             ],
           ),
         );
@@ -554,6 +669,7 @@ class _OverviewTabState extends State<OverviewTab> {
     );
   }
 
+  /*
   void _showSimulationDialog({
     required BuildContext context,
     required String title,
@@ -616,6 +732,7 @@ class _OverviewTabState extends State<OverviewTab> {
       },
     );
   }
+  */
 }
 
 // Stateful Widget untuk diagram interaktif
@@ -695,12 +812,15 @@ class _InteractiveBarState extends State<InteractiveBar> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          widget.label,
-          style: GoogleFonts.inter(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: CorporateTheme.onSurfaceVariant,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            widget.label,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: CorporateTheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
