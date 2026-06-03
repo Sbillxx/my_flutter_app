@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mermaid MD to PNG Converter Premium</title>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Pako CDN (for zlib compression in JS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            outfit: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            glass: 'rgba(15, 23, 42, 0.45)',
+            glassBorder: 'rgba(255, 255, 255, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+      color: #f1f5f9;
+      min-height: 100vh;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+    
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    
+    .glow-text {
+      background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #4f46e5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 40px rgba(99, 102, 241, 0.2);
+    }
+    
+    .btn-gradient {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.6);
+      filter: brightness(1.1);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.5);
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 font-sans">
+
+  <div class="max-w-7xl mx-auto space-y-8">
+    
+    <!-- HEADER -->
+    <header class="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-glassBorder pb-6">
+      <div class="space-y-1 text-center md:text-left">
+        <h1 class="text-3xl md:text-4xl font-extrabold font-outfit tracking-tight flex items-center justify-center md:justify-start gap-3">
+          <i class="fa-solid fa-diagram-project text-indigo-500 animate-pulse"></i>
+          <span class="glow-text">Mermaid MD to PNG</span>
+        </h1>
+        <p class="text-slate-400 text-sm md:text-base font-light">
+          Ubah file Markdown yang berisi diagram Mermaid menjadi gambar PNG premium secara instan untuk laporan Word Anda.
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-2"></span>
+          Ready Offline
+        </span>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- LEFT SIDEBAR: CONTROLS & BATCH FILE LIST -->
+      <div class="lg:col-span-4 space-y-6">
+        
+        <!-- DRAG AND DROP ZONE -->
+        <div id="drop-zone" class="glass-panel rounded-2xl p-6 border-2 border-dashed border-indigo-500/30 hover:border-indigo-500 transition-all cursor-pointer relative overflow-hidden group text-center">
+          <input type="file" id="file-input" accept=".md" class="hidden">
+          <div class="space-y-4 py-8">
+            <div class="w-16 h-16 mx-auto bg-indigo-500/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <i class="fa-solid fa-file-arrow-up text-2xl text-indigo-400"></i>
+            </div>
+            <div class="space-y-1">
+              <p class="font-semibold text-slate-200">Seret & Lepas file .md di sini</p>
+              <p class="text-xs text-slate-400">atau klik untuk menelusuri folder komputer Anda</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONFIGURATION CARD -->
+        <div class="glass-panel rounded-2xl p-6 space-y-6">
+          <h3 class="font-outfit font-bold text-lg text-indigo-300 flex items-center gap-2">
+            <i class="fa-solid fa-sliders"></i>
+            Pengaturan Render
+          </h3>
+          
+          <div class="space-y-4">
+            <!-- Theme -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Tema Diagram</label>
+              <select id="config-theme" class="w-full bg-slate-900/60 border border-glassBorder rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 transition-all">
+                <option value="default" selected>Default (Terang)</option>
+                <option value="dark">Dark (Gelap)</option>
+                <option value="forest">Forest (Hijau Asri)</option>
+                <option value="neutral">Neutral (Minimalis)</option>
+              </select>
+            </div>
+
+            <!-- Background Color Style -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Gaya Latar Belakang</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" data-bg="transparent" class="bg-indigo-600 border border-indigo-500 text-white rounded-xl py-2 px-3 text-xs font-medium hover:bg-indigo-600 transition-all bg-btn bg-option-active">
+                  Transparan
+                </button>
+                <button type="button" data-bg="white" class="bg-slate-900 border border-glassBorder text-slate-300 rounded-xl py-2 px-3 text-xs font-medium hover:bg-slate-800 transition-all bg-btn">
+                  Putih Solid
+                </button>
+                <button type="button" data-bg="custom" class="bg-slate-900 border border-glassBorder text-slate-300 rounded-xl py-2 px-3 text-xs font-medium hover:bg-slate-800 transition-all bg-btn flex items-center justify-center gap-1">
+                  Kustom
+                </button>
+              </div>
+              <div id="custom-color-container" class="hidden mt-2 flex items-center gap-2">
+                <input type="color" id="config-bg-color" value="#ffffff" class="w-10 h-10 border-0 rounded cursor-pointer bg-transparent">
+                <input type="text" id="config-bg-hex" value="FFFFFF" class="flex-1 bg-slate-900/60 border border-glassBorder rounded-xl px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 uppercase">
+              </div>
+            </div>
+
+            <!-- Scale / Resolution -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block flex justify-between">
+                <span>Skala Resolusi</span>
+                <span id="scale-val" class="text-indigo-400 font-bold">2x (Sangat Tajam)</span>
+              </label>
+              <input type="range" id="config-scale" min="1" max="4" value="2" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+              <span class="text-[10px] text-slate-400 italic block">Disarankan 2x - 3x untuk dokumen Word agar tidak pecah saat dicetak.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BATCH FILES HISTORY -->
+        <div class="glass-panel rounded-2xl p-6 space-y-4">
+          <h3 class="font-outfit font-bold text-lg text-indigo-300 flex justify-between items-center">
+            <span>
+              <i class="fa-solid fa-list-ul mr-2"></i>Daftar Riwayat File
+            </span>
+            <span id="file-count" class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-mono">0</span>
+          </h3>
+          <div id="file-list" class="max-h-48 overflow-y-auto space-y-2 pr-1 text-sm text-slate-400">
+            <p class="text-xs text-center py-4 italic text-slate-500">Belum ada file yang diunggah.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT SIDE: PREVIEW & ACTION PANEL -->
+      <div class="lg:col-span-8 flex flex-col space-y-6">
+        
+        <div class="glass-panel rounded-2xl p-6 flex-1 flex flex-col space-y-4 min-h-[400px]">
+          
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-glassBorder pb-4">
+            <div>
+              <h2 id="current-diagram-title" class="font-outfit font-bold text-xl text-slate-200">
+                Diagram Preview
+              </h2>
+              <p id="current-diagram-subtitle" class="text-xs text-slate-400 italic mt-0.5">Unggah file .md untuk melihat hasil</p>
+            </div>
+            
+            <!-- ACTIONS BUTTONS -->
+            <div id="action-buttons-container" class="flex flex-wrap items-center gap-2 opacity-50 pointer-events-none transition-all duration-300">
+              <button id="btn-copy" class="btn-gradient text-white rounded-xl px-4 py-2 text-xs font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-copy"></i> Copy Gambar
+              </button>
+              <button id="btn-download" class="btn-secondary text-slate-200 rounded-xl px-4 py-2 text-xs font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-download"></i> Download PNG
+              </button>
+              <button id="btn-copy-code" class="btn-secondary text-slate-200 rounded-xl px-3 py-2 text-xs font-semibold" title="Copy Kode Mermaid">
+                <i class="fa-solid fa-code"></i> Copy Code
+              </button>
+            </div>
+          </div>
+
+          <!-- PREVIEW DISPLAY -->
+          <div class="flex-1 rounded-xl bg-slate-950/40 border border-glassBorder flex items-center justify-center p-6 min-h-[300px] relative overflow-hidden">
+            <!-- Loading Indicator -->
+            <div id="preview-loader" class="hidden absolute inset-0 bg-slate-950/70 backdrop-blur-sm z-10 flex flex-col items-center justify-center space-y-3">
+              <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-500 animate-spin"></i>
+              <p class="text-sm font-medium text-slate-300">Merender diagram dari API...</p>
+            </div>
+            
+            <!-- Welcome View -->
+            <div id="preview-placeholder" class="text-center space-y-3">
+              <i class="fa-solid fa-diagram-next text-4xl text-slate-600"></i>
+              <p class="text-slate-400 text-sm">Pratinjau visual diagram Mermaid akan muncul di sini</p>
+            </div>
+            
+            <!-- Real Render Image -->
+            <img id="preview-img" class="hidden max-w-full max-h-[500px] object-contain drop-shadow-lg" alt="Rendered Mermaid Diagram">
+          </div>
+          
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="text-center text-xs text-slate-500 border-t border-glassBorder pt-6">
+      <p>Dibuat secara premium untuk memudahkan konversi diagram langsung ke format Word.</p>
+    </footer>
+
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-6 glass-panel border-indigo-500/30 text-slate-100 rounded-xl px-4 py-3 text-sm flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 shadow-xl z-50">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-message">Toast message</span>
+  </div>
+
+  <script>
+    // Constants
+    const API_BASE = "https://mermaid.ink";
+    
+    // UI Elements
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const configTheme = document.getElementById('config-theme');
+    const configScale = document.getElementById('config-scale');
+    const scaleVal = document.getElementById('scale-val');
+    const fileList = document.getElementById('file-list');
+    const fileCountEl = document.getElementById('file-count');
+    const currentTitle = document.getElementById('current-diagram-title');
+    const currentSubtitle = document.getElementById('current-diagram-subtitle');
+    const actionButtons = document.getElementById('action-buttons-container');
+    const previewLoader = document.getElementById('preview-loader');
+    const previewPlaceholder = document.getElementById('preview-placeholder');
+    const previewImg = document.getElementById('preview-img');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnDownload = document.getElementById('btn-download');
+    const btnCopyCode = document.getElementById('btn-copy-code');
+    const customBgContainer = document.getElementById('custom-color-container');
+    const configBgColor = document.getElementById('config-bg-color');
+    const configBgHex = document.getElementById('config-bg-hex');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+
+    // State Variables
+    let activeBgStyle = "transparent"; // "transparent", "white", "custom"
+    let currentDiagrams = []; // Store currently parsed files
+    let selectedDiagramIndex = -1;
+
+    // Toast Function
+    function showToast(message, type = "success") {
+      toastMessage.innerText = message;
+      if (type === "success") {
+        toastIcon.className = "fa-solid fa-circle-check text-emerald-400";
+      } else {
+        toastIcon.className = "fa-solid fa-circle-xmark text-rose-400";
+      }
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    // Pako/Zlib Compression (matches JS pako exactly)
+    function pakoDeflate(jsonString) {
+      const data = new TextEncoder().encode(jsonString);
+      // Pako deflate default
+      const compressed = pako.deflate(data, { level: 9 });
+      
+      // Base64 encoding
+      let binary = '';
+      const len = compressed.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(compressed[i]);
+      }
+      const base64 = btoa(binary);
+      
+      // URL safe replacements
+      return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    // Build URL for Mermaid.ink
+    function getRenderUrl(code) {
+      const state = {
+        code: code.trim(),
+        mermaid: { theme: configTheme.value }
+      };
+      
+      const pakoStr = pakoDeflate(JSON.stringify(state));
+      let url = `${API_BASE}/img/pako:${pakoStr}?scale=${configScale.value}`;
+      
+      // Background colors
+      if (activeBgStyle === "white") {
+        url += `&bgColor=!white`;
+      } else if (activeBgStyle === "custom") {
+        const hex = configBgHex.value.trim().replace("#", "");
+        url += `&bgColor=${hex}`;
+      }
+      
+      return url;
+    }
+
+    // Parse Markdown File Content
+    function parseMarkdown(text, filename) {
+      const regex = /```mermaid\s*\n([\s\S]*?)(?:\n```|$)/g;
+      let match;
+      const parsed = [];
+      
+      while ((match = regex.exec(text)) !== null) {
+        const block = match[1].trim();
+        if (block) {
+          parsed.push(block);
+        }
+      }
+      
+      return parsed;
+    }
+
+    // Handle File processing
+    function handleFile(file) {
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const blocks = parseMarkdown(text, file.name);
+        
+        if (blocks.length === 0) {
+          showToast("Tidak ada diagram Mermaid ditemukan di file ini!", "error");
+          return;
+        }
+
+        const newDiagram = {
+          name: file.name,
+          blocks: blocks,
+          selectedBlock: 0
+        };
+
+        currentDiagrams.push(newDiagram);
+        selectedDiagramIndex = currentDiagrams.length - 1;
+        
+        renderFileList();
+        loadActiveDiagram();
+        showToast(`Berhasil memuat ${blocks.length} diagram.`);
+      };
+      reader.readAsText(file);
+    }
+
+    // Load active diagram properties
+    function loadActiveDiagram() {
+      if (selectedDiagramIndex < 0 || selectedDiagramIndex >= currentDiagrams.length) {
+        // Reset view
+        previewPlaceholder.classList.remove('hidden');
+        previewImg.classList.add('hidden');
+        actionButtons.classList.add('opacity-50', 'pointer-events-none');
+        currentTitle.innerText = "Diagram Preview";
+        currentSubtitle.innerText = "Unggah file .md untuk melihat hasil";
+        return;
+      }
+
+      const activeFile = currentDiagrams[selectedDiagramIndex];
+      const activeCode = activeFile.blocks[activeFile.selectedBlock];
+      
+      currentTitle.innerText = activeFile.name;
+      currentSubtitle.innerText = `Diagram #${activeFile.selectedBlock + 1} dari ${activeFile.blocks.length}`;
+      
+      // Enable Action Buttons
+      actionButtons.classList.remove('opacity-50', 'pointer-events-none');
+      
+      // Render
+      renderPreview(activeCode);
+    }
+
+    // Trigger URL compilation and preview image update
+    function renderPreview(code) {
+      previewLoader.classList.remove('hidden');
+      previewPlaceholder.classList.add('hidden');
+      
+      const url = getRenderUrl(code);
+      
+      // Pre-load image in JS to avoid visual flicker
+      const tempImg = new Image();
+      tempImg.onload = function() {
+        previewImg.src = url;
+        previewImg.classList.remove('hidden');
+        previewLoader.classList.add('hidden');
+      };
+      
+      tempImg.onerror = function() {
+        previewLoader.classList.add('hidden');
+        previewImg.classList.add('hidden');
+        previewPlaceholder.classList.remove('hidden');
+        showToast("Gagal me-render diagram dari API.", "error");
+      };
+      
+      tempImg.src = url;
+    }
+
+    // Render Side Bar File History List
+    function renderFileList() {
+      fileCountEl.innerText = currentDiagrams.length;
+      
+      if (currentDiagrams.length === 0) {
+        fileList.innerHTML = `<p class="text-xs text-center py-4 italic text-slate-500">Belum ada file yang diunggah.</p>`;
+        return;
+      }
+
+      fileList.innerHTML = "";
+      currentDiagrams.forEach((item, index) => {
+        const isActive = index === selectedDiagramIndex;
+        
+        const fileItem = document.createElement('div');
+        fileItem.className = `p-3 rounded-xl cursor-pointer transition-all flex flex-col gap-1 ${
+          isActive 
+            ? "bg-indigo-500/10 border border-indigo-500/30 text-indigo-200" 
+            : "bg-slate-900/30 border border-glassBorder hover:bg-slate-900/60 text-slate-300"
+        }`;
+        
+        fileItem.innerHTML = `
+          <div class="flex items-center justify-between font-medium">
+            <span class="truncate block max-w-[80%]"><i class="fa-solid fa-file-code mr-2 text-indigo-400"></i>${item.name}</span>
+            <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded-full text-indigo-300 border border-glassBorder font-mono">
+              ${item.blocks.length} diagram
+            </span>
+          </div>
+        `;
+        
+        // Multi block selector if file has > 1 diagram
+        if (item.blocks.length > 1) {
+          const selectContainer = document.createElement('div');
+          selectContainer.className = "flex flex-wrap gap-1 mt-2";
+          
+          item.blocks.forEach((_, bIdx) => {
+            const isBlockActive = item.selectedBlock === bIdx;
+            const btn = document.createElement('button');
+            btn.className = `px-2 py-0.5 text-[10px] font-semibold rounded-md border ${
+              isBlockActive 
+                ? "bg-indigo-600 text-white border-indigo-500" 
+                : "bg-slate-950 text-slate-400 border-glassBorder hover:text-slate-200"
+            }`;
+            btn.innerText = `#${bIdx + 1}`;
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              item.selectedBlock = bIdx;
+              selectedDiagramIndex = index;
+              renderFileList();
+              loadActiveDiagram();
+            });
+            selectContainer.appendChild(btn);
+          });
+          fileItem.appendChild(selectContainer);
+        }
+
+        fileItem.addEventListener('click', () => {
+          selectedDiagramIndex = index;
+          renderFileList();
+          loadActiveDiagram();
+        });
+        
+        fileList.appendChild(fileItem);
+      });
+    }
+
+    // Custom copy to clipboard as BLOB so it can be pasted into MS Word
+    async function copyImageToClipboard() {
+      if (selectedDiagramIndex < 0) return;
+      
+      showToast("Sedang menyalin gambar...", "info");
+      
+      const activeFile = currentDiagrams[selectedDiagramIndex];
+      const activeCode = activeFile.blocks[activeFile.selectedBlock];
+      const url = getRenderUrl(activeCode);
+      
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [blob.type]: blob
+          })
+        ]);
+        showToast("Gambar diagram berhasil disalin ke Clipboard! Silakan paste langsung ke Word.");
+      } catch (err) {
+        showToast("Gagal menyalin gambar ke Clipboard: " + err, "error");
+      }
+    }
+
+    // Action Downloads PNG File
+    async function downloadPng() {
+      if (selectedDiagramIndex < 0) return;
+      
+      const activeFile = currentDiagrams[selectedDiagramIndex];
+      const activeCode = activeFile.blocks[activeFile.selectedBlock];
+      const url = getRenderUrl(activeCode);
+      
+      showToast("Mengunduh PNG...", "info");
+      
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        
+        let cleanedName = activeFile.name.replace(".md", "");
+        if (activeFile.blocks.length > 1) {
+          cleanedName += `_${activeFile.selectedBlock + 1}`;
+        }
+        
+        link.href = blobUrl;
+        link.download = `${cleanedName}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(blobUrl);
+        showToast("Berhasil diunduh!");
+      } catch (err) {
+        showToast("Gagal mengunduh gambar: " + err, "error");
+      }
+    }
+
+    // EVENT LISTENERS
+    
+    // Drag & Drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-indigo-400', 'bg-indigo-500/5');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-indigo-400', 'bg-indigo-500/5');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-indigo-400', 'bg-indigo-500/5');
+      const file = e.dataTransfer.files[0];
+      handleFile(file);
+    });
+    
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      handleFile(file);
+    });
+
+    // Theme Selector Change
+    configTheme.addEventListener('change', () => {
+      loadActiveDiagram();
+    });
+
+    // Scale / Range Selector Change
+    configScale.addEventListener('input', (e) => {
+      const val = e.target.value;
+      const desc = {
+        1: "1x (Normal)",
+        2: "2x (Sangat Tajam)",
+        3: "3x (Super Ultra)",
+        4: "4x (Ekstrim)"
+      };
+      scaleVal.innerText = desc[val];
+    });
+
+    configScale.addEventListener('change', () => {
+      loadActiveDiagram();
+    });
+
+    // Background color controls
+    const bgButtons = document.querySelectorAll('button[data-bg]');
+    bgButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Toggle Active style
+        bgButtons.forEach(b => {
+          b.classList.remove('bg-indigo-600', 'border-indigo-500', 'text-white', 'bg-option-active');
+          b.classList.add('bg-slate-900', 'border-glassBorder', 'text-slate-300');
+        });
+        
+        btn.classList.remove('bg-slate-900', 'border-glassBorder', 'text-slate-300');
+        btn.classList.add('bg-indigo-600', 'border-indigo-500', 'text-white', 'bg-option-active');
+        
+        activeBgStyle = btn.getAttribute('data-bg');
+        
+        if (activeBgStyle === "custom") {
+          customBgContainer.classList.remove('hidden');
+        } else {
+          customBgContainer.classList.add('hidden');
+        }
+        
+        loadActiveDiagram();
+      });
+    });
+
+    configBgColor.addEventListener('input', (e) => {
+      configBgHex.value = e.target.value.replace("#", "").toUpperCase();
+    });
+
+    configBgColor.addEventListener('change', () => {
+      loadActiveDiagram();
+    });
+
+    configBgHex.addEventListener('change', (e) => {
+      let val = e.target.value.trim().replace("#", "");
+      if (val.length === 3) {
+        val = val.split('').map(c => c+c).join('');
+      }
+      if (val.length === 6) {
+        configBgColor.value = "#" + val;
+        loadActiveDiagram();
+      } else {
+        showToast("Format warna HEX tidak valid!", "error");
+      }
+    });
+
+    // Action Buttons
+    btnCopy.addEventListener('click', copyImageToClipboard);
+    btnDownload.addEventListener('click', downloadPng);
+    
+    btnCopyCode.addEventListener('click', () => {
+      if (selectedDiagramIndex < 0) return;
+      const activeFile = currentDiagrams[selectedDiagramIndex];
+      const activeCode = activeFile.blocks[activeFile.selectedBlock];
+      
+      navigator.clipboard.writeText(activeCode);
+      showToast("Kode Mermaid disalin!");
+    });
+  </script>
+</body>
+</html>

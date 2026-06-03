@@ -221,28 +221,40 @@ class _OverviewTabState extends State<OverviewTab> {
                         physics: const BouncingScrollPhysics(),
                         child: Row(
                           children: [
-                            _buildScrollKPICard(
-                              title: 'TOTAL PROJECT',
-                              value: (_kpis['totalProjects'] ?? 0).toString(),
-                              badgeText: '+12%',
-                              badgeColor: CorporateTheme.success,
-                              progressValue: 0.7,
-                              progressColor: CorporateTheme.primary,
-                            ),
+                            (() {
+                              final String projTrend = _kpis['totalProjectsTrend']?.toString() ?? '+0';
+                              final Color projBadgeColor = projTrend.startsWith('-') || projTrend == '+0' || projTrend == '0%' 
+                                  ? CorporateTheme.onSurfaceVariant.withOpacity(0.4) 
+                                  : CorporateTheme.success;
+                              return _buildScrollKPICard(
+                                title: 'TOTAL PROJECT',
+                                value: (_kpis['totalProjects'] ?? 0).toString(),
+                                badgeText: projTrend,
+                                badgeColor: projBadgeColor,
+                                progressValue: 0.7,
+                                progressColor: CorporateTheme.primary,
+                              );
+                            }()),
                             const SizedBox(width: 16),
-                            _buildScrollKPICard(
-                              title: 'DELAYED',
-                              value: _kpis['delayedTasks'].toString().padLeft(2, '0'),
-                              badgeText: '-2',
-                              badgeColor: CorporateTheme.error,
-                              progressValue: 0.25,
-                              progressColor: CorporateTheme.error,
-                            ),
+                            (() {
+                              final String delayTrend = _kpis['delayedTasksTrend']?.toString() ?? '0';
+                              final Color delayBadgeColor = delayTrend.startsWith('-') 
+                                  ? CorporateTheme.success 
+                                  : (delayTrend == '0' ? CorporateTheme.onSurfaceVariant.withOpacity(0.4) : CorporateTheme.error);
+                              return _buildScrollKPICard(
+                                title: 'DELAYED',
+                                value: _kpis['delayedTasks'].toString().padLeft(2, '0'),
+                                badgeText: delayTrend,
+                                badgeColor: delayBadgeColor,
+                                progressValue: 0.25,
+                                progressColor: CorporateTheme.error,
+                              );
+                            }()),
                             const SizedBox(width: 16),
                             _buildScrollKPICard(
                               title: 'ACTIVE STAFF',
                               value: _kpis['activeStaff'].toString(),
-                              badgeText: 'LIVE',
+                              badgeText: _kpis['activeStaffTrend']?.toString() ?? 'LIVE',
                               badgeColor: CorporateTheme.success,
                               progressValue: 0.9,
                               progressColor: CorporateTheme.success,

@@ -64,8 +64,11 @@ class ApiService {
     final fallback = {
       'kpis': {
         'totalProjects': 4,
+        'totalProjectsTrend': '+12%',
         'delayedTasks': 8,
+        'delayedTasksTrend': '-2',
         'activeStaff': 42,
+        'activeStaffTrend': 'LIVE',
       },
       'weeklyProductivity': [
         {
