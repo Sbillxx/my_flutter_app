@@ -674,9 +674,10 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                 ),
 
                 // Glassmorphic Floating Feedback Button
-                Positioned(
-                  left: 0,
-                  right: 0,
+                if (_activeLocalTab == 2)
+                  Positioned(
+                    left: 0,
+                    right: 0,
                   bottom: 0,
                   child: ClipRect(
                     child: BackdropFilter(
@@ -805,12 +806,6 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                 'ACTIVE TASKS',
                 style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: CorporateTheme.onSurfaceVariant),
               ),
-              TextButton.icon(
-                onPressed: _showAddTaskBottomSheet,
-                icon: const Icon(Icons.add, size: 14),
-                label: const Text('ASSIGN NEW TASK', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
-                style: TextButton.styleFrom(foregroundColor: CorporateTheme.primary),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -835,7 +830,7 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                       statusColor: CorporateTheme.success,
                       statusBg: CorporateTheme.success.withOpacity(0.1),
                       date: task['dueDate'] as String,
-                      progress: 0.5,
+                      progress: task['progress'] != null ? (task['progress'] as num).toDouble() : 0.5,
                       textTheme: textTheme,
                     );
                   },

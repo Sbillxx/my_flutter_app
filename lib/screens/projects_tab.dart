@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme.dart';
 import '../services/api_service.dart';
+import 'project_detail_screen.dart';
 
 class ProjectsTab extends StatefulWidget {
   const ProjectsTab({super.key});
@@ -151,9 +152,23 @@ class _ProjectsTabState extends State<ProjectsTab> {
                       // Tanggal Target
                       TextField(
                         controller: dateController,
+                        readOnly: true,
+                        onTap: () async {
+                          final DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2100),
+                          );
+                          if (pickedDate != null) {
+                            final List<String> months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                            String formattedDate = '${pickedDate.day} ${months[pickedDate.month - 1]} ${pickedDate.year}';
+                            dateController.text = formattedDate;
+                          }
+                        },
                         decoration: InputDecoration(
                           labelText: 'Tanggal Target',
-                          hintText: 'Contoh: 15 Jun 2026',
+                          hintText: 'Pilih tanggal...',
                           suffixIcon: const Icon(Icons.calendar_today_outlined),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         ),
@@ -439,8 +454,25 @@ class _ProjectsTabState extends State<ProjectsTab> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: dateController,
+                        readOnly: true,
+                        onTap: () async {
+                          // Try to parse existing date if possible, otherwise use now
+                          DateTime initialDate = DateTime.now();
+                          
+                          final DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: initialDate,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (pickedDate != null) {
+                            final List<String> months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                            String formattedDate = '${pickedDate.day} ${months[pickedDate.month - 1]} ${pickedDate.year}';
+                            dateController.text = formattedDate;
+                          }
+                        },
                         decoration: InputDecoration(
-                          hintText: 'Contoh: 15 Jun 2026 atau 30 Jun 2026',
+                          hintText: 'Pilih tanggal target...',
                           prefixIcon: const Icon(Icons.calendar_today, size: 16),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -889,8 +921,17 @@ class _ProjectsTabState extends State<ProjectsTab> {
                                 workloadBg = CorporateTheme.error.withOpacity(0.1);
                               }
 
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 16.0),
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ProjectDetailScreen(projectId: proj['id']),
+                                    ),
+                                  );
+                                },
+                                child: Card(
+                                  margin: const EdgeInsets.only(bottom: 16.0),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Column(
@@ -1054,8 +1095,9 @@ class _ProjectsTabState extends State<ProjectsTab> {
                                     ],
                                   ),
                                 ),
-                              );
-                            },
+                              ),
+                            );
+                          },
                           ),
               ),
             ],

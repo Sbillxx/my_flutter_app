@@ -449,6 +449,35 @@ class ApiService {
     return {'status': 'success', 'message': 'Simulasi Berhasil! (Offline Fallback)'};
   }
 
+  // 7d. Get Project Detail API
+  static Future<Map<String, dynamic>> getProjectDetails(int id) async {
+    final fallbacks = {
+      1: {
+        'project': {
+          'id': 1,
+          'name': 'Stitch Location Tracker',
+          'description': 'Aplikasi pemantauan koordinat GPS and log aktivitas lapangan tim operasional.',
+          'targetDate': '15 Jun 2026',
+          'progress': 0.85,
+          'workload': 'NORMAL',
+          'division': 'Engineering',
+          'assignedStaff': ['Sarah Chen', 'Elena Rodriguez'],
+          'tasks': [
+            {
+              'id': 1,
+              'title': 'Integrasi Mapbox SDK',
+              'description': 'Selesai integrasi mapbox untuk visualisasi rute.',
+              'image_url': null,
+              'created_at': '12 Jun 2026, 14:30',
+              'user_name': 'Sarah Chen'
+            }
+          ]
+        }
+      }
+    };
+    return _get('/projects/$id', fallbacks[id] ?? fallbacks[1]!);
+  }
+
   // 8. Reports API
   static Future<Map<String, dynamic>> getReports() async {
     final fallback = {
