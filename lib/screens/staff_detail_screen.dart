@@ -266,7 +266,9 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
 
   void _showFeedbackBottomSheet() {
     final noteController = TextEditingController();
-    double selectedRating = 5.0;
+    double ratingQuality = 5.0;
+    double ratingDiscipline = 5.0;
+    double ratingTeamwork = 5.0;
 
     showModalBottomSheet(
       context: context,
@@ -319,35 +321,68 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Rating Stars Selection
-                      Row(
-                        children: [
-                          Text(
-                            'RATING EVALUASI: ',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 10),
-                          ),
-                          const SizedBox(width: 8),
-                          Row(
-                            children: List.generate(5, (index) {
-                              final int starVal = index + 1;
-                              final bool isSelected = starVal <= selectedRating;
-                              return GestureDetector(
-                                onTap: () {
-                                  setSheetState(() {
-                                    selectedRating = starVal.toDouble();
-                                  });
-                                },
-                                child: Icon(
-                                  Icons.star,
-                                  color: isSelected ? Colors.amber : Colors.grey[300],
-                                  size: 28,
-                                ),
-                              );
-                            }),
-                          ),
-                        ],
+                      // 1. Kualitas Kerja
+                      _buildCriteriaStarRow(
+                        label: 'KUALITAS KERJA:',
+                        rating: ratingQuality,
+                        onRatingChanged: (val) {
+                          setSheetState(() {
+                            ratingQuality = val;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // 2. Kedisiplinan & Waktu
+                      _buildCriteriaStarRow(
+                        label: 'KEDISIPLINAN:',
+                        rating: ratingDiscipline,
+                        onRatingChanged: (val) {
+                          setSheetState(() {
+                            ratingDiscipline = val;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // 3. Kerjasama Tim
+                      _buildCriteriaStarRow(
+                        label: 'KERJASAMA TIM:',
+                        rating: ratingTeamwork,
+                        onRatingChanged: (val) {
+                          setSheetState(() {
+                            ratingTeamwork = val;
+                          });
+                        },
                       ),
                       const SizedBox(height: 16),
+
+                      // Rata-rata Nilai
+                      (() {
+                        final double avg = (ratingQuality + ratingDiscipline + ratingTeamwork) / 3.0;
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: CorporateTheme.success.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: CorporateTheme.success.withOpacity(0.2)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'SKOR RATA-RATA EVALUASI:',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CorporateTheme.success),
+                              ),
+                              Text(
+                                avg.toStringAsFixed(1),
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: CorporateTheme.success),
+                              ),
+                            ],
+                          ),
+                        );
+                      }()),
+                      const SizedBox(height: 20),
 
                       TextField(
                         controller: noteController,
@@ -383,11 +418,12 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                             ),
                           );
 
-                          // Post to API
+                          // Post to API with Average Rating
+                          final double averageRating = (ratingQuality + ratingDiscipline + ratingTeamwork) / 3.0;
                           final res = await ApiService.submitFeedback(
                             widget.staffId,
                             noteController.text,
-                            selectedRating,
+                            averageRating,
                           );
 
                           if (!context.mounted) return;
@@ -711,6 +747,86 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
     );
   }
 
+  Widget _buildCriteriaStarRow({
+    required String label,
+    required double rating,
+    required ValueChanged<double> onRatingChanged,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: CorporateTheme.onSurfaceVariant,
+          ),
+        ),
+        Row(
+          children: List.generate(5, (index) {
+            final double starVal = index + 1.0;
+            return GestureDetector(
+              onTap: () => onRatingChanged(starVal),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child: Icon(
+                  Icons.star,
+                  color: starVal <= rating ? Colors.amber : Colors.grey[300],
+                  size: 24,
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniCriteriaRow({
+    required String label,
+    required double rating,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              color: CorporateTheme.onSurfaceVariant,
+            ),
+          ),
+          Row(
+            children: [
+              Row(
+                children: List.generate(5, (index) {
+                  final double starVal = index + 1.0;
+                  return Icon(
+                    Icons.star,
+                    color: starVal <= rating ? Colors.amber : Colors.grey[200],
+                    size: 10,
+                  );
+                }),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                rating.toStringAsFixed(1),
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: CorporateTheme.primaryContainer,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMetricCard({
     required String title,
     required String value,
@@ -900,6 +1016,11 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                   itemBuilder: (context, index) {
                     final eval = _evaluations[index];
                     final double rating = (eval['rating'] as num).toDouble();
+                    // Simulate the sub-criteria rating based on overall rating
+                    final double ratingQuality = rating;
+                    final double ratingDiscipline = rating;
+                    final double ratingTeamwork = rating;
+
                     return Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -918,13 +1039,26 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                                 style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               Row(
-                                children: List.generate(5, (starIdx) {
-                                  return Icon(
-                                    Icons.star,
-                                    color: (starIdx + 1) <= rating ? Colors.amber : Colors.grey[200],
-                                    size: 14,
-                                  );
-                                }),
+                                children: [
+                                  Row(
+                                    children: List.generate(5, (starIdx) {
+                                      return Icon(
+                                        Icons.star,
+                                        color: (starIdx + 1) <= rating ? Colors.amber : Colors.grey[200],
+                                        size: 14,
+                                      );
+                                    }),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    rating.toStringAsFixed(1),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: CorporateTheme.success,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -934,6 +1068,42 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                             style: textTheme.labelLarge?.copyWith(fontSize: 10, color: CorporateTheme.outline),
                           ),
                           const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Column(
+                              children: [
+                                _buildMiniCriteriaRow(
+                                  label: 'Kualitas Kerja',
+                                  rating: ratingQuality,
+                                ),
+                                const Divider(height: 8),
+                                _buildMiniCriteriaRow(
+                                  label: 'Kedisiplinan',
+                                  rating: ratingDiscipline,
+                                ),
+                                const Divider(height: 8),
+                                _buildMiniCriteriaRow(
+                                  label: 'Kerjasama Tim',
+                                  rating: ratingTeamwork,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Catatan:',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: CorporateTheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
                           Text(
                             eval['note'] as String,
                             style: textTheme.bodyMedium?.copyWith(color: CorporateTheme.onSurfaceVariant, height: 1.4),

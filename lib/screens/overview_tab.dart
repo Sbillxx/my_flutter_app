@@ -309,23 +309,45 @@ class _OverviewTabState extends State<OverviewTab> {
                         // Animating Bar Chart Area (Dynamic)
                         SizedBox(
                           height: 160,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: _topPerformers.map((staff) {
-                              final String name = staff['name'] as String;
-                              final String label = name.split(' ').first;
-                              final double progress = ((staff['workloadPercentage'] ?? 0) as num).toDouble() / 100.0;
-                              final bool isSuccess = progress >= 0.8;
+                          child: _topPerformers.length <= 7
+                              ? Row(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: _topPerformers.map((staff) {
+                                    final String name = staff['name'] as String;
+                                    final String label = name.split(' ').first;
+                                    final double progress = ((staff['workloadPercentage'] ?? 0) as num).toDouble() / 100.0;
+                                    final bool isSuccess = progress >= 0.8;
 
-                              return Expanded(
-                                child: InteractiveBar(
-                                  label: label.toUpperCase(),
-                                  fillPercent: progress,
-                                  isSuccess: isSuccess,
+                                    return Expanded(
+                                      child: InteractiveBar(
+                                        label: label.toUpperCase(),
+                                        fillPercent: progress,
+                                        isSuccess: isSuccess,
+                                      ),
+                                    );
+                                  }).toList(),
+                                )
+                              : SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: _topPerformers.map((staff) {
+                                      final String name = staff['name'] as String;
+                                      final String label = name.split(' ').first;
+                                      final double progress = ((staff['workloadPercentage'] ?? 0) as num).toDouble() / 100.0;
+                                      final bool isSuccess = progress >= 0.8;
+
+                                      return SizedBox(
+                                        width: 56,
+                                        child: InteractiveBar(
+                                          label: label.toUpperCase(),
+                                          fillPercent: progress,
+                                          isSuccess: isSuccess,
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
                                 ),
-                              );
-                            }).toList(),
-                          ),
                         ),
                       ],
                     ),

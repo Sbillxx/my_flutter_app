@@ -3,9 +3,15 @@ import 'theme.dart';
 import 'screens/main_navigation_screen.dart';
 import 'services/notification_service.dart';
 
+import 'package:flutter/semantics.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.initialize();
+  if (kIsWeb) {
+    SemanticsBinding.instance.ensureSemantics();
+  }
   runApp(const MyApp());
 }
 

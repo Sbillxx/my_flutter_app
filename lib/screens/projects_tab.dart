@@ -14,10 +14,12 @@ class ProjectsTab extends StatefulWidget {
 class _ProjectsTabState extends State<ProjectsTab> {
   String _searchQuery = '';
   String _statusFilter = 'ALL'; // ALL, ON TRACK, AT RISK, DELAYED
+  String _completionFilter = 'ALL'; // ALL, IN PROGRESS, COMPLETED
   bool _isLoading = true;
   List<dynamic> _projects = [];
   List<dynamic> _allStaff = [];
   final _searchController = TextEditingController();
+
 
   @override
   void initState() {
@@ -763,6 +765,13 @@ class _ProjectsTabState extends State<ProjectsTab> {
     if (_statusFilter != 'ALL') {
       filteredProjects = filteredProjects.where((p) => p['workload'] == _statusFilter).toList();
     }
+    if (_completionFilter != 'ALL') {
+      if (_completionFilter == 'COMPLETED') {
+        filteredProjects = filteredProjects.where((p) => (p['progress'] as num).toDouble() >= 1.0).toList();
+      } else if (_completionFilter == 'IN PROGRESS') {
+        filteredProjects = filteredProjects.where((p) => (p['progress'] as num).toDouble() < 1.0).toList();
+      }
+    }
 
     return Scaffold(
       backgroundColor: CorporateTheme.background,
@@ -876,6 +885,45 @@ class _ProjectsTabState extends State<ProjectsTab> {
                                 if (selected) {
                                   setState(() {
                                     _statusFilter = filter;
+                                  });
+                                }
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Filter Status Penyelesaian (Tingkat Kelayakan)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: ['ALL', 'IN PROGRESS', 'COMPLETED'].map((filter) {
+                          final bool isSelected = _completionFilter == filter;
+                          Color chipColor = CorporateTheme.primary;
+                          if (filter == 'IN PROGRESS') chipColor = CorporateTheme.warning;
+                          if (filter == 'COMPLETED') chipColor = CorporateTheme.success;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: ChoiceChip(
+                              label: Text(
+                                filter == 'ALL' ? 'SEMUA STATUS' : (filter == 'IN PROGRESS' ? 'BERJALAN' : 'SELESAI'),
+                                style: textTheme.labelLarge?.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : chipColor,
+                                ),
+                              ),
+                              selected: isSelected,
+                              selectedColor: chipColor,
+                              backgroundColor: chipColor.withOpacity(0.08),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() {
+                                    _completionFilter = filter;
                                   });
                                 }
                               },
